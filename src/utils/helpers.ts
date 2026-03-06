@@ -270,3 +270,30 @@ export function range(start: number, end: number, step: number = 1): number[] {
     }
     return result;
 }
+
+/**
+ * Classifies raw monthly income into one of four buckets for the recommendation engine.
+ *
+ * @param monthlyIncome - The user's monthly income
+ * @returns IncomeBucket type
+ */
+import { INCOME_BUCKETS, INCOME_INPUT_LIMITS } from "../constants";
+import type { IncomeBucket } from "../types";
+
+export function getIncomeBucket(monthlyIncome: number): IncomeBucket {
+    if (monthlyIncome <= INCOME_BUCKETS.securedOnlyMax) return "secured_only";
+    if (monthlyIncome <= INCOME_BUCKETS.limitedMax) return "limited";
+    if (monthlyIncome <= INCOME_BUCKETS.normalMax) return "normal";
+    return "premium";
+}
+
+/**
+ * Clamps monthly income at the engine's processing limit (₹10L).
+ * This ensures anyone earning more get the same top-tier recommendations.
+ *
+ * @param income - Raw income amount
+ * @returns Clamped income amount
+ */
+export function clampIncomeForEngine(income: number): number {
+    return Math.min(income, INCOME_INPUT_LIMITS.cap);
+}

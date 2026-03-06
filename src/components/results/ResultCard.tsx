@@ -1,4 +1,5 @@
 import type { RankedCard } from '../../types';
+import { trackResultCardClick } from '../../services/analytics';
 
 export default function ResultCard({ card, rank }: { card: RankedCard, rank: number }) {
     const getGradient = () => {
@@ -6,7 +7,7 @@ export default function ResultCard({ card, rank }: { card: RankedCard, rank: num
     };
 
     return (
-        <div className={`result-card ${rank === 1 ? 'top' : ''}`}>
+        <div className={`result-card ${rank === 1 ? 'top' : ''}`} onClick={() => trackResultCardClick(card.name, rank)}>
             <div className="rc-top-row">
                 <div className="rc-left-info">
                     <div className={`rc-rank rank-${Math.min(rank, 3)}`}>#{rank}</div>

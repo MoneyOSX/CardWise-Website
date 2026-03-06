@@ -1,52 +1,98 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { trackLoadingScreenView } from '../../services/analytics';
 
 export default function LoadingScreen({ onComplete }: { onComplete: () => void }) {
-    const [msgIdx, setMsgIdx] = useState(0);
-    const messages = [
-        "Checking offers from HDFC, ICICI, Axis, Kotak...",
-        "Analyzing your profile...",
-        "Checking bank eligibility...",
-        "Calculating reward permutations...",
-        "Finding your best matches..."
+    const [progress, setProgress] = useState(0);
+
+    const steps = [
+        { label: "Checking income eligibility", icon: "check" },
+        { label: "Verifying approval chances", icon: "check" },
+        { label: "Calculating annual savings...", icon: "zap" },
+        { label: "Ranking your top 5 matches", icon: "trophy" }
     ];
 
     useEffect(() => {
+        trackLoadingScreenView();
+
+        const duration = 3200;
+        const interval = 50;
+        let elapsed = 0;
+
         const timer = setInterval(() => {
-            setMsgIdx(prev => (prev + 1) % messages.length);
-        }, 800);
+            elapsed += interval;
+            const newProgress = Math.min((elapsed / duration) * 100, 100);
+            setProgress(newProgress);
 
-        const finish = setTimeout(() => {
-            onComplete();
-        }, 3200);
+            if (elapsed >= duration) {
+                clearInterval(timer);
+                onComplete();
+            }
+        }, interval);
 
-        return () => {
-            clearInterval(timer);
-            clearTimeout(finish);
-        };
-    }, [onComplete, messages.length]);
+        return () => clearInterval(timer);
+    }, [onComplete]);
+
+    const activeStep = Math.min(Math.floor((progress / 100) * steps.length), steps.length - 1);
 
     return (
-        <div id="screen-loading" className="active" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: 0 }}>
-            {/* Header / Navbar */}
-            <div className="app-header" style={{ position: 'relative', width: '100%' }}>
-                <Link className="logo" to="/">
-                    <div className="logo-mark" style={{ width: '32px', height: '32px', borderRadius: '8px', fontSize: '15px' }}>✦</div>
-                    <div className="logo-text">Card<span>Wise</span></div>
-                </Link>
-
-                <div className="nav-cta" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginLeft: 'auto' }}>
-                    <button className="btn-ghost" style={{ padding: '8px 16px', fontSize: '14px', border: '1px solid var(--border)', borderRadius: '10px' }} onClick={() => window.scrollTo({ top: 0 })}>Sign In</button>
-                    <Link to="/app" className="btn-primary" style={{ padding: '10px 18px', fontSize: '14px', borderRadius: '10px' }}>Find My Card →</Link>
-                </div>
+        <div className="loading-screen-dark">
+            <div className="loading-card-glow">
+                <div className="loading-card-icon">💳</div>
             </div>
 
-            {/* Main Content */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '-80px' }}>
-                <div className="loading-icon" style={{ borderRadius: '50%', boxShadow: '0 4px 20px rgba(47,111,237,0.3)', width: '90px', height: '90px', background: 'var(--blue)', fontSize: '36px' }}>💳</div>
-                <div className="loading-spinner" style={{ width: '48px', height: '48px', border: '3px solid rgba(47,111,237,0.1)', borderTopColor: 'var(--blue)' }}></div>
-                <div className="loading-text" style={{ fontSize: '24px', fontWeight: 700, marginBottom: '6px' }}>Ranking your top matches...</div>
-                <div className="loading-sub">{messages[msgIdx]}</div>
+            <div className="loading-banks">
+                <span className="bank-badge active">HDFC</span>
+                <span className="bank-badge active">Axis</span>
+                <span className="bank-badge">ICICI</span>
+                <span className="bank-badge">Kotak</span>
+                <span className="bank-badge">SBI</span>
+            </div>
+
+            <h2 className="loading-title">Finding your matches...</h2>
+            <p className="loading-subtitle">Checking 50+ cards for your profile</p>
+
+            <div className="loading-progress-container">
+                <div className="loading-progress-bar" style={{ width: `${progress}%` }}></div>
+            </div>
+
+            <div className="loading-checklist">
+                {steps.map((step, idx) => {
+                    const isActive = idx <= activeStep;
+                    return (
+                        <div key={idx} className={`checklist-item ${isActive ? 'active' : ''}`}>
+                            <div className="checklist-icon">
+                                {step.icon === 'check' && (
+                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                )}
+                                {step.icon === 'zap' && (
+                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                )}
+                                {step.icon === 'trophy' && (
+                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                                        <path d="M4 22h16"></path>
+                                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                                    </svg>
+                                )}
+                            </div>
+                            <span className="checklist-label">{step.label}</span>
+                            {isActive && (
+                                <div className="checklist-success-icon">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="#10B981" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

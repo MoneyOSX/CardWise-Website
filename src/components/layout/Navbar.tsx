@@ -3,29 +3,17 @@ import { Link, useLocation } from 'react-router-dom';
 import Logo from '../shared/Logo';
 import { trackCTAClick } from '../../services/analytics';
 
-export default function Navbar() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const location = useLocation();
+interface NavLinksProps {
+    mobile?: boolean;
+    onClose: () => void;
+}
 
-    // Close menu on navigation
-    useEffect(() => {
-        setIsMenuOpen(false);
-        // Ensure body scroll is restored when navigating
-        document.body.style.overflow = '';
-    }, [location.pathname, location.hash]);
-
-    const toggleMenu = () => {
-        const nextState = !isMenuOpen;
-        setIsMenuOpen(nextState);
-        // Prevent background scrolling when menu is open
-        document.body.style.overflow = nextState ? 'hidden' : '';
-    };
-
-    const NavLinks = ({ mobile = false }) => (
+function NavLinks({ mobile = false, onClose }: NavLinksProps) {
+    return (
         <>
-            <li><a href="#how-it-works" onClick={() => mobile && setIsMenuOpen(false)}>How it works</a></li>
-            <li><a href="#features" onClick={() => mobile && setIsMenuOpen(false)}>Why CardWise</a></li>
-            <li><a href="#cards" onClick={() => mobile && setIsMenuOpen(false)}>Top Cards</a></li>
+            <li><a href="#how-it-works" onClick={() => mobile && onClose()}>How it works</a></li>
+            <li><a href="#features" onClick={() => mobile && onClose()}>Why CardWise</a></li>
+            <li><a href="#cards" onClick={() => mobile && onClose()}>Top Cards</a></li>
             {mobile && (
                 <li>
                     <Link
@@ -33,7 +21,7 @@ export default function Navbar() {
                         className="btn-primary"
                         style={{ width: '100%', justifyContent: 'center' }}
                         onClick={() => {
-                            setIsMenuOpen(false);
+                            onClose();
                             trackCTAClick('navbar-mobile');
                         }}
                     >
@@ -43,17 +31,41 @@ export default function Navbar() {
             )}
         </>
     );
+}
+
+export default function Navbar() {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const location = useLocation();
+    const [prevLocationKey, setPrevLocationKey] = useState(location.key);
+
+    // Close menu when route changes (derived state during render, React-recommended pattern)
+    if (prevLocationKey !== location.key) {
+        setPrevLocationKey(location.key);
+        if (isMenuOpen) {
+            setIsMenuOpen(false);
+        }
+    }
+
+    // Sync body scroll lock with menu state (external DOM system sync — correct use of effect)
+    useEffect(() => {
+        document.body.style.overflow = isMenuOpen ? 'hidden' : '';
+        return () => { document.body.style.overflow = ''; };
+    }, [isMenuOpen]);
+
+    const closeMenu = () => setIsMenuOpen(false);
+
+    const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
     return (
         <nav className={isMenuOpen ? 'menu-open' : ''}>
             <div className="container nav-inner">
-                <Link to="/" onClick={() => setIsMenuOpen(false)}>
+                <Link to="/" onClick={closeMenu}>
                     <Logo />
                 </Link>
 
                 {/* Desktop Links */}
                 <ul className="nav-links desktop-only">
-                    <NavLinks />
+                    <NavLinks onClose={closeMenu} />
                 </ul>
 
                 <div className="nav-cta">
@@ -66,7 +78,7 @@ export default function Navbar() {
 
             {/* Mobile Menu - Outside nav-inner to escape containing block constraints */}
             <ul className={`nav-links mobile-menu ${isMenuOpen ? 'mobile-open' : ''}`}>
-                <NavLinks mobile={true} />
+                <NavLinks mobile={true} onClose={closeMenu} />
             </ul>
         </nav>
     );

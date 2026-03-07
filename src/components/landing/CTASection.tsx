@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { trackCTAClick } from '../../services/analytics';
 
 export default function CTASection() {
     return (
@@ -7,7 +8,7 @@ export default function CTASection() {
                 <h2 className="cta-h2">Ready to find your<br /><span className="accent">perfect card?</span></h2>
                 <p className="cta-sub">Join thousands of Indians who found their ideal credit card with CardWise.</p>
                 <div className="cta-actions">
-                    <Link to="/app" className="btn-primary large" style={{ background: 'white', color: 'var(--navy)' }}>
+                    <Link to="/app" className="btn-primary large" style={{ background: 'white', color: 'var(--navy)' }} onClick={() => trackCTAClick('cta_section')}>
                         ✦ Get My Recommendations
                     </Link>
                 </div>

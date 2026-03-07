@@ -152,13 +152,39 @@ export const AGE_RANGES = {
 } as const;
 
 /**
- * Income ranges for categorization (monthly, INR)
+ * Income bucket thresholds (monthly, INR)
+ * Defines the 4 tiers used by the recommendation engine.
+ *
+ * Bucket behaviour:
+ * - secured_only: ₹0 – ₹10K  — skip engine, show secured/student cards
+ * - limited:      >₹10K–₹20K — run engine with aggressive filter (top 3 only)
+ * - normal:       >₹20K–₹2L  — normal flow
+ * - premium:      >₹2L        — clamp to ₹10L, show all premium cards
  */
-export const INCOME_RANGES = {
-    entry: { min: 0, max: 25000 },
-    mid: { min: 25001, max: 75000 },
-    high: { min: 75001, max: 200000 },
-    premium: { min: 200001, max: Infinity },
+export const INCOME_BUCKETS = {
+    /** Upper bound for secured-only tier (₹0–₹10K) */
+    securedOnlyMax: 10_000,
+    /** Upper bound for limited-results tier (>₹10K–₹20K) */
+    limitedMax: 20_000,
+    /** Upper bound for normal tier (>₹20K–₹2L) */
+    normalMax: 200_000,
+    /** Max minIncome allowed for limited-tier cards */
+    limitedMaxCardIncome: 15_000,
+    /** Max cards to show in limited-results tier */
+    limitedMaxResults: 3,
+} as const;
+
+/**
+ * Income input limits for the wizard income step
+ *
+ * - min: anything below this shows a warning and disables Continue
+ * - cap: anything above this is silently clamped for the engine
+ */
+export const INCOME_INPUT_LIMITS = {
+    /** Minimum sensible monthly income (₹1,000) */
+    min: 1_000,
+    /** Engine cap — amounts above map to the same premium outcome (₹10L) */
+    cap: 1_000_000,
 } as const;
 
 /**
@@ -197,7 +223,7 @@ export const SPENDING_SLABS = {
 export const DEFAULT_VALUES = {
     age: 25,
     existingCardsCount: 0,
-    airportLoungeImportance: 3 as 3,
+    airportLoungeImportance: 3 as const,
     travelFrequency: "occasional" as const,
     primaryGoals: ["cashback"] as PrimaryGoal[],
     feePreference: "lifetime_free" as const,

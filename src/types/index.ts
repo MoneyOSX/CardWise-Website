@@ -41,6 +41,16 @@ export type ApprovalDifficulty = "easy" | "moderate" | "difficult";
 export type ApprovalLabel = "High" | "Moderate" | "Low";
 
 /**
+ * Income bucket classification used by the recommendation engine.
+ *
+ * - `secured_only`: ₹0–₹10K  — skip engine, show secured/student cards only
+ * - `limited`:      >₹10K–₹20K — run engine with aggressive filter, cap results
+ * - `normal`:       >₹20K–₹2L  — normal engine flow
+ * - `premium`:      >₹2L        — normal engine, income clamped to ₹10L for scoring
+ */
+export type IncomeBucket = "secured_only" | "limited" | "normal" | "premium";
+
+/**
  * Card type categorization
  */
 export type CardType = "cashback" | "rewards" | "travel" | "fuel" | "shopping" | "lifestyle";
@@ -220,6 +230,24 @@ export interface RankedCard extends CreditCard {
     approvalProbability: ApprovalLabel;
     /** Rank position (1 = best match) */
     rank: number;
+}
+
+/**
+ * Wrapper returned by the recommendation engine that includes
+ * bucket metadata alongside the ranked card list.
+ */
+export interface RecommendationResult {
+    /** Ordered list of recommended cards (never empty — fallback guaranteed) */
+    cards: RankedCard[];
+    /** Which income bucket the user fell into */
+    incomeBucket: IncomeBucket;
+    /**
+     * True when results are intentionally limited (₹10K–₹20K bucket).
+     * ResultsPage uses this to show an informational banner.
+     */
+    limitedResults: boolean;
+    /** Optional human-readable note to surface to the user */
+    note?: string;
 }
 
 /**

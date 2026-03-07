@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { trackCTAClick } from '../../services/analytics';
 
 export default function Hero() {
     return (
@@ -17,7 +18,7 @@ export default function Hero() {
                             Stop guessing. Tell us how you spend and what you value — we'll match you to the exact card that maximizes your rewards. Free, instant, no sign-up.
                         </p>
                         <div className="hero-actions">
-                            <Link to="/app" className="btn-primary large">
+                            <Link to="/app" className="btn-primary large" onClick={() => trackCTAClick('hero')}>
                                 ✦ Find My Perfect Card
                             </Link>
                             <a href="#how-it-works" className="btn-ghost">See how it works</a>
@@ -30,7 +31,7 @@ export default function Hero() {
                     </div>
 
                     <div className="hero-right">
-                        <div style={{ position: 'relative', padding: '40px 60px' }}>
+                        <div className="hero-ani-wrap">
                             <div className="float-badge left">
                                 <div className="fb-icon">🎉</div>
                                 <div>

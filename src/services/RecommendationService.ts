@@ -21,7 +21,9 @@ import {
     BENEFITS_VALUES,
     SCORING_CONSTANTS
 } from "../constants";
-import { clamp, normalizeScore, getArrayIntersection } from "../utils/helpers";
+import { clamp, normalizeScore, getArrayIntersection, clampIncomeForEngine, getIncomeBucket } from "../utils/helpers";
+import { INCOME_BUCKETS } from "../constants";
+import type { RecommendationResult, IncomeBucket } from "../types";
 
 /**
  * Calculates total annual spending from a user's monthly spending profile.
@@ -72,15 +74,82 @@ function hasBankingRelationship(bankAccounts: string[], issuer: string): boolean
 export function rankCards(
     userProfile: UserProfile,
     allCards: CreditCard[]
-): RankedCard[] {
-    // 1. Filter cards based on hard eligibility criteria
-    const eligibleCards = filterEligibleCards(allCards, userProfile);
+): RecommendationResult {
+    const rawIncome = userProfile.monthlyIncome;
+    const bucket: IncomeBucket = getIncomeBucket(rawIncome);
+    const effectiveIncome = clampIncomeForEngine(rawIncome);
 
-    // 2. Calculate comprehensive scores for each eligible card
-    const scoredCards = eligibleCards.map((card) => {
-        const scoreBreakdown = calculateCardScore(card, userProfile);
-        const netAnnualBenefit = calculateNetAnnualBenefit(card, userProfile);
-        const reasoning = generateReasoning(card, userProfile, scoreBreakdown, netAnnualBenefit);
+    // Create a modified profile with effective income for internal calculations
+    const effectiveProfile = {
+        ...userProfile,
+        monthlyIncome: effectiveIncome
+    };
+
+    let resultCards: RankedCard[] = [];
+    let limitedResults = false;
+    let note = "";
+
+    // 1. Bucket-specific logic
+    if (bucket === "secured_only") {
+        // Skip engine. Show secured/student/easy cards only.
+        const securedCards = allCards.filter(card =>
+            card.minIncome <= 10000 ||
+            (card.approvalDifficulty === "easy" && card.annualFee === 0) ||
+            card.targetUserTypes.includes("Student")
+        );
+
+        resultCards = scoreAndRankCards(securedCards, effectiveProfile).slice(0, 5);
+        note = "Showing entry-level cards perfect for building credit.";
+    } else {
+        // Run engine with bucket-specific filters
+        let eligibleCards = filterEligibleCards(allCards, effectiveProfile);
+
+        if (bucket === "limited") {
+            // Aggressive filter for limited results
+            eligibleCards = eligibleCards.filter(card =>
+                card.minIncome <= INCOME_BUCKETS.limitedMaxCardIncome
+            );
+            limitedResults = true;
+            note = "Showing limited results best suited for your income level.";
+        }
+
+        resultCards = scoreAndRankCards(eligibleCards, effectiveProfile);
+
+        // Cap limited results
+        if (bucket === "limited") {
+            resultCards = resultCards.slice(0, INCOME_BUCKETS.limitedMaxResults);
+        } else {
+            resultCards = resultCards.slice(0, DISPLAY_CONSTANTS.maxCardsDisplay);
+        }
+    }
+
+    // 2. Zero-results fallback
+    if (resultCards.length === 0) {
+        const fallbacks = allCards.filter(card =>
+            card.minIncome <= 15000 ||
+            card.approvalDifficulty === "easy" ||
+            card.targetUserTypes.includes("Student")
+        );
+        resultCards = scoreAndRankCards(fallbacks, effectiveProfile).slice(0, 3);
+        note = "We've matched you with these highly-accessible cards to get you started.";
+    }
+
+    return {
+        cards: resultCards,
+        incomeBucket: bucket,
+        limitedResults,
+        note
+    };
+}
+
+/**
+ * Shared logic for scoring, reasoning, and ranking a subset of cards
+ */
+function scoreAndRankCards(cardsToRank: CreditCard[], profile: UserProfile): RankedCard[] {
+    const scored = cardsToRank.map((card) => {
+        const scoreBreakdown = calculateCardScore(card, profile);
+        const netAnnualBenefit = calculateNetAnnualBenefit(card, profile);
+        const reasoning = generateReasoning(card, profile, scoreBreakdown, netAnnualBenefit);
         const approvalProbability = getApprovalProbabilityLabel(scoreBreakdown.approvalScore);
 
         return {
@@ -89,20 +158,16 @@ export function rankCards(
             reasoning,
             netAnnualBenefit,
             approvalProbability,
-            rank: 0, // Will be assigned after sorting
+            rank: 0,
         } as RankedCard;
     });
 
-    // 3. Sort by total score (descending) and assign ranks
-    const rankedCards = scoredCards
+    return scored
         .sort((a, b) => b.scoreBreakdown.totalScore - a.scoreBreakdown.totalScore)
         .map((card, index) => ({
             ...card,
             rank: index + 1,
         }));
-
-    // 4. Return top 5 cards
-    return rankedCards.slice(0, DISPLAY_CONSTANTS.maxCardsDisplay);
 }
 
 /**

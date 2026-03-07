@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import StepOccupation from './StepOccupation';
 import StepIncome from './StepIncome';
@@ -9,20 +9,47 @@ import StepBanks from './StepBanks';
 import SidePanel from './SidePanel';
 import LoadingScreen from './LoadingScreen';
 import Logo from '../shared/Logo';
+import {
+    trackWizardStepView,
+    trackWizardStepComplete,
+    trackWizardAbandon,
+} from '../../services/analytics';
+
+const STEP_NAMES = ['Work', 'Income', 'Credit', 'Spends', 'Preferences', 'Banks'] as const;
 
 export default function WizardLayout() {
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
+    const stepStartTime = useRef(Date.now());
+    const completedRef = useRef(false);
 
-    const handleNext = () => {
+    useEffect(() => {
+        trackWizardStepView(step, STEP_NAMES[step - 1]);
+        stepStartTime.current = Date.now();
+    }, [step]);
+
+    useEffect(() => {
+        return () => {
+            if (!completedRef.current) {
+                trackWizardAbandon(step, STEP_NAMES[step - 1]);
+            }
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleNext = useCallback(() => {
+        const timeOnStep = Date.now() - stepStartTime.current;
+        trackWizardStepComplete(step, STEP_NAMES[step - 1], timeOnStep);
+
         if (step < 6) {
             setStep(step + 1);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
+            completedRef.current = true;
             setIsLoading(true);
         }
-    };
+    }, [step]);
 
     const handleLoadingComplete = () => {
         navigate('/app/results');

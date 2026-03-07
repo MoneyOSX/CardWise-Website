@@ -223,7 +223,7 @@ export const SPENDING_SLABS = {
 export const DEFAULT_VALUES = {
     age: 25,
     existingCardsCount: 0,
-    airportLoungeImportance: 3 as 3,
+    airportLoungeImportance: 3 as const,
     travelFrequency: "occasional" as const,
     primaryGoals: ["cashback"] as PrimaryGoal[],
     feePreference: "lifetime_free" as const,

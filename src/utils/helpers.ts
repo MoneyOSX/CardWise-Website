@@ -142,7 +142,7 @@ export function safeDivide(numerator: number, denominator: number): number {
  * isValidNumber(NaN) // Returns false
  * isValidNumber(Infinity) // Returns false
  */
-export function isValidNumber(value: any): boolean {
+export function isValidNumber(value: unknown): boolean {
     return typeof value === 'number' && !isNaN(value) && isFinite(value);
 }
 
@@ -213,6 +213,7 @@ export function randomInt(min: number, max: number): number {
  * @example
  * const debouncedSearch = debounce(searchFunction, 300);
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends (...args: any[]) => any>(
     func: T,
     delay: number

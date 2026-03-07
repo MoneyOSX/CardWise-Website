@@ -29,13 +29,11 @@ export default function StepSpending({ onNext }: { onNext: () => void }) {
                         </div>
                         <div className="spend-ranges">
                             {cat.ranges.map((val, idx) => {
-                                // @ts-ignore
                                 const isSelected = profile.spending[cat.id] === val;
                                 return (
                                     <div
                                         key={idx}
                                         className={`range-chip ${isSelected ? 'selected' : ''}`}
-                                        // @ts-ignore
                                         onClick={() => setSpending(cat.id, val)}
                                     >
                                         {idx === 0 ? 'None' : `₹${val / 1000}${idx === cat.ranges.length - 1 ? 'K+' : 'K'}`}

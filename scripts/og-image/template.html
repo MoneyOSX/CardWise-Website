@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: linear-gradient(135deg, #0B1120 0%, #131C2E 50%, #1B2740 100%);
+    color: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 48px 56px;
+    overflow: hidden;
+  }
+
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-mark {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #2F6FED, #0ABFA3);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: white;
+  }
+
+  .logo-text {
+    font-size: 28px;
+    font-weight: 700;
+    color: #F0F4FF;
+  }
+
+  .logo-text span {
+    color: #2F6FED;
+  }
+
+  .headline {
+    font-size: 32px;
+    font-weight: 800;
+    text-align: right;
+    line-height: 1.2;
+    color: #F0F4FF;
+  }
+
+  .cards-row {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+  }
+
+  .card {
+    width: 320px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 24px;
+    backdrop-filter: blur(10px);
+  }
+
+  .card-art {
+    width: 100%;
+    height: 48px;
+    background: linear-gradient(135deg, #2F6FED, #0B1120);
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+
+  .card-bank {
+    font-size: 13px;
+    color: #8A96A8;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .card-name {
+    font-size: 17px;
+    font-weight: 700;
+    margin: 4px 0 16px;
+    color: #F0F4FF;
+  }
+
+  .card-metrics {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .metric-label {
+    font-size: 11px;
+    color: #8A96A8;
+    margin-bottom: 2px;
+  }
+
+  .metric-val {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .metric-val.blue { color: #2F6FED; }
+  .metric-val.green { color: #10B981; }
+
+  .card.top {
+    border-color: rgba(47, 111, 237, 0.4);
+    box-shadow: 0 0 30px rgba(47, 111, 237, 0.15);
+  }
+
+  .bottom {
+    text-align: center;
+  }
+
+  .savings {
+    font-size: 36px;
+    font-weight: 800;
+    color: #10B981;
+  }
+
+  .subtitle {
+    font-size: 18px;
+    color: #8A96A8;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+  <div class="top-row">
+    <div class="logo">
+      <div class="logo-mark">✦</div>
+      <div class="logo-text">Card<span>Wise</span></div>
+    </div>
+    <div class="headline">Find Your Perfect<br>Credit Card</div>
+  </div>
+
+  <div class="cards-row">
+    <div class="card top">
+      <div class="card-art"></div>
+      <div class="card-bank">HDFC Bank</div>
+      <div class="card-name">Regalia Gold</div>
+      <div class="card-metrics">
+        <div>
+          <div class="metric-label">Match</div>
+          <div class="metric-val blue">92/100</div>
+        </div>
+        <div>
+          <div class="metric-label">Net Savings</div>
+          <div class="metric-val green">₹11,200</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-art" style="background: linear-gradient(135deg, #0ABFA3, #0B1120);"></div>
+      <div class="card-bank">SBI Card</div>
+      <div class="card-name">SimplyCLICK</div>
+      <div class="card-metrics">
+        <div>
+          <div class="metric-label">Match</div>
+          <div class="metric-val blue">87/100</div>
+        </div>
+        <div>
+          <div class="metric-label">Net Savings</div>
+          <div class="metric-val green">₹8,400</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-art" style="background: linear-gradient(135deg, #F5A623, #0B1120);"></div>
+      <div class="card-bank">ICICI Bank</div>
+      <div class="card-name">Amazon Pay</div>
+      <div class="card-metrics">
+        <div>
+          <div class="metric-label">Match</div>
+          <div class="metric-val blue">84/100</div>
+        </div>
+        <div>
+          <div class="metric-label">Net Savings</div>
+          <div class="metric-val green">₹7,100</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="savings">Save up to ₹11,000/year</div>
+    <div class="subtitle">50+ cards compared in 2 minutes</div>
+  </div>
+</body>
+</html>

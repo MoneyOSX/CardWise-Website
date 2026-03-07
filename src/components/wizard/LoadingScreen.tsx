@@ -51,8 +51,11 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
             <h2 className="loading-title">Finding your matches...</h2>
             <p className="loading-subtitle">Checking 50+ cards for your profile</p>
 
-            <div className="loading-progress-container">
-                <div className="loading-progress-bar" style={{ width: `${progress}%` }}></div>
+            <div className="loading-progress-wrapper">
+                <div className="loading-progress-container">
+                    <div className="loading-progress-bar" style={{ width: `${progress}%` }}></div>
+                </div>
+                <span className="loading-progress-percent">{Math.round(progress)}%</span>
             </div>
 
             <div className="loading-checklist">

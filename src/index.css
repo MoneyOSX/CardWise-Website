@@ -3155,13 +3155,29 @@ footer {
   text-align: center;
 }
 
-.loading-progress-container {
+.loading-progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
   max-width: 440px;
-  height: 6px;
+  margin-bottom: 32px;
+}
+
+.loading-progress-percent {
+  font-size: 14px;
+  font-weight: 600;
+  color: #93C5FD;
+  min-width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.loading-progress-container {
+  flex: 1;
+  height: 12px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 100px;
-  margin-bottom: 32px;
   overflow: hidden;
 }
 

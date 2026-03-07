@@ -45,3 +45,6 @@ export const trackResultCardClick = (cardName: string, cardRank: number) =>
 
 export const trackFilterClick = (filterName: string) =>
   track('filter_click', { filter_name: filterName });
+
+export const trackResultsFeedback = (thumbs: 'up' | 'down') =>
+  track('results_feedback', { thumbs });

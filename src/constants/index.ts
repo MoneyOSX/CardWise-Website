@@ -88,6 +88,8 @@ export const SCORING_CONSTANTS = {
     highApprovalIncomeBuffer: 2.0,
     /** Income buffer multiplier for moderate approval */
     moderateApprovalIncomeBuffer: 1.3,
+    /** Bonus points for complementary card type */
+    complementaryBonus: 8,
 } as const;
 
 /**
@@ -222,7 +224,7 @@ export const SPENDING_SLABS = {
  */
 export const DEFAULT_VALUES = {
     age: 25,
-    existingCardsCount: 0,
+    existingCardTypes: [] as import("../types").CardType[],
     airportLoungeImportance: 3 as const,
     travelFrequency: "occasional" as const,
     primaryGoals: ["cashback"] as PrimaryGoal[],

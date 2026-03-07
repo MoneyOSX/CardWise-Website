@@ -85,6 +85,12 @@ export function rankCards(
         monthlyIncome: effectiveIncome
     };
 
+    // Filter out cards the user already owns
+    const ownedIds = new Set(userProfile.existingCardIds ?? []);
+    const availableCards = ownedIds.size > 0
+        ? allCards.filter(c => !ownedIds.has(c.id))
+        : allCards;
+
     let resultCards: RankedCard[] = [];
     let limitedResults = false;
     let note = "";
@@ -92,17 +98,17 @@ export function rankCards(
     // 1. Bucket-specific logic
     if (bucket === "secured_only") {
         // Skip engine. Show secured/student/easy cards only.
-        const securedCards = allCards.filter(card =>
+        const securedCards = availableCards.filter(card =>
             card.minIncome <= 10000 ||
             (card.approvalDifficulty === "easy" && card.annualFee === 0) ||
             card.targetUserTypes.includes("Student")
         );
 
-        resultCards = scoreAndRankCards(securedCards, effectiveProfile).slice(0, 5);
+        resultCards = scoreAndRankCards(securedCards, effectiveProfile, allCards).slice(0, 5);
         note = "Showing entry-level cards perfect for building credit.";
     } else {
         // Run engine with bucket-specific filters
-        let eligibleCards = filterEligibleCards(allCards, effectiveProfile);
+        let eligibleCards = filterEligibleCards(availableCards, effectiveProfile);
 
         if (bucket === "limited") {
             // Aggressive filter for limited results
@@ -113,7 +119,7 @@ export function rankCards(
             note = "Showing limited results best suited for your income level.";
         }
 
-        resultCards = scoreAndRankCards(eligibleCards, effectiveProfile);
+        resultCards = scoreAndRankCards(eligibleCards, effectiveProfile, allCards);
 
         // Cap limited results
         if (bucket === "limited") {
@@ -125,12 +131,12 @@ export function rankCards(
 
     // 2. Zero-results fallback
     if (resultCards.length === 0) {
-        const fallbacks = allCards.filter(card =>
+        const fallbacks = availableCards.filter(card =>
             card.minIncome <= 15000 ||
             card.approvalDifficulty === "easy" ||
             card.targetUserTypes.includes("Student")
         );
-        resultCards = scoreAndRankCards(fallbacks, effectiveProfile).slice(0, 3);
+        resultCards = scoreAndRankCards(fallbacks, effectiveProfile, allCards).slice(0, 3);
         note = "We've matched you with these highly-accessible cards to get you started.";
     }
 
@@ -145,11 +151,11 @@ export function rankCards(
 /**
  * Shared logic for scoring, reasoning, and ranking a subset of cards
  */
-function scoreAndRankCards(cardsToRank: CreditCard[], profile: UserProfile): RankedCard[] {
+function scoreAndRankCards(cardsToRank: CreditCard[], profile: UserProfile, allCards: CreditCard[]): RankedCard[] {
     const scored = cardsToRank.map((card) => {
-        const scoreBreakdown = calculateCardScore(card, profile);
+        const scoreBreakdown = calculateCardScore(card, profile, allCards);
         const netAnnualBenefit = calculateNetAnnualBenefit(card, profile);
-        const reasoning = generateReasoning(card, profile, scoreBreakdown, netAnnualBenefit);
+        const reasoning = generateReasoning(card, profile, scoreBreakdown, netAnnualBenefit, allCards);
         const approvalProbability = getApprovalProbabilityLabel(scoreBreakdown.approvalScore);
 
         return {
@@ -201,12 +207,13 @@ function filterEligibleCards(
  */
 function calculateCardScore(
     card: CreditCard,
-    profile: UserProfile
+    profile: UserProfile,
+    allCards: CreditCard[]
 ): CardScoreBreakdown {
     // Calculate individual dimension scores (0-100 each)
     const rewardScore = calculateRewardScore(card, profile.spending);
     const feeScore = calculateFeeScore(card, profile);
-    const fitScore = calculateFitScore(card, profile);
+    const fitScore = calculateFitScore(card, profile, allCards);
     const benefitsScore = calculateBenefitsScore(card, profile);
     const approvalScore = calculateApprovalScore(card, profile);
 
@@ -326,7 +333,8 @@ function calculateFeeScore(
  */
 function calculateFitScore(
     card: CreditCard,
-    profile: UserProfile
+    profile: UserProfile,
+    allCards: CreditCard[]
 ): number {
     let score = SCORING_CONSTANTS.baseFitScore;
 
@@ -364,6 +372,40 @@ function calculateFitScore(
     // Banking relationship
     if (profile.bankAccounts.length > 0 && hasBankingRelationship(profile.bankAccounts, card.issuer)) {
         score += SCORING_CONSTANTS.bankingRelationshipBonus;
+    }
+
+    // Complementary card type boost
+    const ownedTypes = new Set<string>();
+
+    if (profile.existingCardIds?.length > 0) {
+        for (const c of allCards) {
+            if (profile.existingCardIds.includes(c.id)) {
+                ownedTypes.add(c.type);
+            }
+        }
+    }
+
+    if (profile.existingCardTypes?.length > 0) {
+        for (const t of profile.existingCardTypes) {
+            ownedTypes.add(t);
+        }
+    }
+
+    if (ownedTypes.size > 0) {
+        const complementMap: Record<string, string[]> = {
+            cashback: ["travel", "rewards"],
+            rewards: ["travel", "cashback"],
+            travel: ["cashback", "shopping"],
+            shopping: ["travel", "rewards"],
+            fuel: ["travel", "cashback"],
+            lifestyle: ["travel", "cashback"],
+        };
+        for (const ownedType of ownedTypes) {
+            if (complementMap[ownedType]?.includes(card.type)) {
+                score += SCORING_CONSTANTS.complementaryBonus;
+                break;
+            }
+        }
     }
 
     return clamp(score, 0, 100);
@@ -531,7 +573,8 @@ function generateReasoning(
     card: CreditCard,
     profile: UserProfile,
     scores: CardScoreBreakdown,
-    netAnnualBenefit: number
+    netAnnualBenefit: number,
+    allCards: CreditCard[]
 ): string[] {
     const reasons: string[] = [];
 
@@ -580,6 +623,37 @@ function generateReasoning(
         const overlap = getArrayIntersection(card.supportedPlatforms, profile.primaryShoppingPlatforms);
         if (overlap.length > 0) {
             reasons.push(`Special rewards on ${overlap[0]}`);
+        }
+    }
+
+    // Complementary card reasoning
+    const ownedTypesForReasoning = new Set<string>();
+    if (profile.existingCardIds?.length > 0) {
+        for (const c of allCards) {
+            if (profile.existingCardIds.includes(c.id)) {
+                ownedTypesForReasoning.add(c.type);
+            }
+        }
+    }
+    if (profile.existingCardTypes?.length > 0) {
+        for (const t of profile.existingCardTypes) {
+            ownedTypesForReasoning.add(t);
+        }
+    }
+    if (ownedTypesForReasoning.size > 0) {
+        const complementMap: Record<string, string[]> = {
+            cashback: ["travel", "rewards"],
+            rewards: ["travel", "cashback"],
+            travel: ["cashback", "shopping"],
+            shopping: ["travel", "rewards"],
+            fuel: ["travel", "cashback"],
+            lifestyle: ["travel", "cashback"],
+        };
+        for (const ownedType of ownedTypesForReasoning) {
+            if (complementMap[ownedType]?.includes(card.type)) {
+                reasons.push(`Complements your existing ${ownedType} card with ${card.type} benefits`);
+                break;
+            }
         }
     }
 

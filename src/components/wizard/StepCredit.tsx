@@ -1,7 +1,7 @@
 import { useUserStore } from '../../store/userStore';
 
 export default function StepCredit({ onNext }: { onNext: () => void }) {
-    const { profile, setCreditScore, setExistingCardsCount } = useUserStore();
+    const { profile, setCreditScore } = useUserStore();
 
     const scoreOptions = [
         { label: 'Poor', range: '<650', value: 600 },
@@ -27,19 +27,6 @@ export default function StepCredit({ onNext }: { onNext: () => void }) {
                     >
                         <span className="score-btn-label">{opt.label}</span>
                         <span className="score-btn-range">{opt.range}</span>
-                    </div>
-                ))}
-            </div>
-
-            <label className="form-label">How many credit cards do you currently have?</label>
-            <div className="chip-row">
-                {[0, 1, 2, 3, 4, 5].map(num => (
-                    <div
-                        key={num}
-                        className={`chip ${profile.existingCardsCount === num ? 'selected' : ''}`}
-                        onClick={() => setExistingCardsCount(num)}
-                    >
-                        {num === 5 ? '5+' : num}
                     </div>
                 ))}
             </div>

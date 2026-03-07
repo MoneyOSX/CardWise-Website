@@ -20,7 +20,7 @@ export default function ResultsSidebar({ matchedCount, topCard }: { matchedCount
                 <div className="pdc-grid">
                     <div><div className="pdc-label">Monthly Income</div><div className="pdc-val blue">₹{(profile.monthlyIncome / 1000).toFixed(0)}K</div></div>
                     <div><div className="pdc-label">CIBIL Score</div><div className="pdc-val">{profile.creditScore || "Don't Know"}</div></div>
-                    <div><div className="pdc-label">Cards Held</div><div className="pdc-val">{profile.existingCardsCount}</div></div>
+                    <div><div className="pdc-label">Cards Held</div><div className="pdc-val">{profile.existingCardIds.length + profile.existingCardTypes.length}</div></div>
                     <div><div className="pdc-label">Banks</div><div className="pdc-val">{profile.bankAccounts.join(', ') || 'None'}</div></div>
                 </div>
                 <div className="pdc-divider"></div>

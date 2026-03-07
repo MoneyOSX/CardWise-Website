@@ -796,4 +796,52 @@ export const cards: CreditCard[] = [
         bestFor: ["young professionals", "lifetime free", "balanced"],
         applyUrl: "https://www.idfcfirstbank.com/credit-card/millennia-credit-card",
     },
-]
+];
+
+/**
+ * Returns cards grouped by issuer for UI selection
+ */
+export function getCardsByIssuer(): Map<string, CreditCard[]> {
+    const grouped = new Map<string, CreditCard[]>();
+    for (const card of cards) {
+        const existing = grouped.get(card.issuer) || [];
+        existing.push(card);
+        grouped.set(card.issuer, existing);
+    }
+    return grouped;
+}
+
+const BANK_TO_ISSUER: Record<string, string> = {
+    "HDFC": "HDFC Bank",
+    "ICICI": "ICICI Bank",
+    "SBI": "SBI Card",
+    "Axis": "Axis Bank",
+    "Kotak": "Kotak Mahindra Bank",
+    "IndusInd": "IndusInd Bank",
+    "IDFC First": "IDFC First Bank",
+    "Yes Bank": "Yes Bank",
+    "Citibank": "Citibank",
+    "Standard Chartered": "Standard Chartered",
+};
+
+export function getCardsForBanks(selectedBanks: string[]): {
+    prioritized: CreditCard[];
+    others: CreditCard[];
+} {
+    const issuerNames = new Set(
+        selectedBanks.map(bank => BANK_TO_ISSUER[bank]).filter(Boolean)
+    );
+
+    const prioritized: CreditCard[] = [];
+    const others: CreditCard[] = [];
+
+    for (const card of cards) {
+        if (issuerNames.has(card.issuer)) {
+            prioritized.push(card);
+        } else {
+            others.push(card);
+        }
+    }
+
+    return { prioritized, others };
+}

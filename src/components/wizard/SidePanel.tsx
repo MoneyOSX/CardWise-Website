@@ -42,7 +42,7 @@ export default function SidePanel({ step }: { step: number }) {
                             <div><div className="ppd-label">Employment</div><div className="ppd-value">{profile.occupation || '-'}</div></div>
                             {step >= 3 && <div><div className="ppd-label">Income</div><div className="ppd-value teal">₹{(profile.monthlyIncome || 0) / 1000}K</div></div>}
                             {step >= 4 && <div><div className="ppd-label">CIBIL Score</div><div className="ppd-value">{profile.creditScore || "Don't Know"}</div></div>}
-                            {step >= 5 && <div><div className="ppd-label">Cards Held</div><div className="ppd-value">{profile.existingCardsCount}</div></div>}
+                            {step >= 5 && <div><div className="ppd-label">Cards Held</div><div className="ppd-value">{profile.existingCardIds.length + profile.existingCardTypes.length}</div></div>}
                         </div>
                     </div>
                 </div>

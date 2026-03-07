@@ -7,7 +7,7 @@
  */
 
 import { create } from "zustand";
-import type { UserProfile, Occupation, TravelFrequency, PrimaryGoal, FeePreference } from "../types";
+import type { UserProfile, Occupation, TravelFrequency, PrimaryGoal, FeePreference, CardType } from "../types";
 import { DEFAULT_VALUES } from "../constants";
 
 /**
@@ -32,7 +32,8 @@ const initialProfile: UserProfile = {
         other: 0,
     },
     creditScore: undefined,
-    existingCardsCount: DEFAULT_VALUES.existingCardsCount,
+    existingCardTypes: DEFAULT_VALUES.existingCardTypes,
+    existingCardIds: [],
     bankAccounts: [],
 
     // Lifestyle Preferences
@@ -88,10 +89,12 @@ interface UserStore {
     setCreditScore: (score: number | undefined) => void;
 
     /**
-     * Sets number of existing credit cards user has
-     * @param count - Number of existing cards (0-10)
+     * Toggles a card ID in/out of existingCardIds
+     * @param cardId - Card ID to toggle
      */
-    setExistingCardsCount: (count: number) => void;
+    toggleExistingCard: (cardId: string) => void;
+
+    toggleExistingCardType: (cardType: CardType) => void;
 
     /**
      * Sets banks where user has existing accounts
@@ -222,8 +225,23 @@ export const useUserStore = create<UserStore>((set, get) => ({
     setCreditScore: (creditScore) =>
         set((state) => ({ profile: { ...state.profile, creditScore } })),
 
-    setExistingCardsCount: (existingCardsCount) =>
-        set((state) => ({ profile: { ...state.profile, existingCardsCount } })),
+    toggleExistingCard: (cardId) =>
+        set((state) => {
+            const ids = state.profile.existingCardIds;
+            const existingCardIds = ids.includes(cardId)
+                ? ids.filter(id => id !== cardId)
+                : [...ids, cardId];
+            return { profile: { ...state.profile, existingCardIds } };
+        }),
+
+    toggleExistingCardType: (cardType) =>
+        set((state) => {
+            const types = state.profile.existingCardTypes;
+            const existingCardTypes = types.includes(cardType)
+                ? types.filter(t => t !== cardType)
+                : [...types, cardType];
+            return { profile: { ...state.profile, existingCardTypes } };
+        }),
 
     setBankAccounts: (bankAccounts) =>
         set((state) => ({ profile: { ...state.profile, bankAccounts } })),

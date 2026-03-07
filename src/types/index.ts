@@ -98,8 +98,9 @@ export interface UserProfile {
     spending: SpendingProfile;
     /** Optional credit score (300-900 range) */
     creditScore?: number;
-    /** Number of existing credit cards (0-5+) */
-    existingCardsCount: number;
+    existingCardTypes: CardType[];
+    /** IDs of specific cards the user already owns (from our database) */
+    existingCardIds: string[];
     /** Banks where user has existing accounts */
     bankAccounts: string[];
 

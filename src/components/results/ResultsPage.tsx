@@ -4,6 +4,7 @@ import { cards } from '../../data/cards';
 import { rankCards } from '../../services/RecommendationService';
 import ResultsSidebar from './ResultsSidebar';
 import FilterChips from './FilterChips';
+import FeedbackPrompt from './FeedbackPrompt';
 import ResultCard from './ResultCard';
 import { trackResultsView, trackFilterClick } from '../../services/analytics';
 
@@ -80,6 +81,8 @@ export default function ResultsPage() {
                             <p style={{ color: 'var(--text-light)' }}>Try selecting "All Cards" or adjusting your preferences.</p>
                         </div>
                     )}
+
+                    <FeedbackPrompt />
                 </div>
             </div>
         </div>

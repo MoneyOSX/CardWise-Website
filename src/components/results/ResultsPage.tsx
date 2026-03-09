@@ -1,15 +1,20 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useUserStore } from '../../store/userStore';
 import { cards } from '../../data/cards';
 import { rankCards } from '../../services/RecommendationService';
 import ResultsSidebar from './ResultsSidebar';
 import FilterChips from './FilterChips';
 import ResultCard from './ResultCard';
-import { trackResultsView, trackFilterClick } from '../../services/analytics';
+import CompareBar from './CompareBar';
+import CompareModal from './CompareModal';
+import { trackResultsView, trackFilterClick, trackCompareToggle, trackCompareView } from '../../services/analytics';
 
 export default function ResultsPage() {
     const { profile } = useUserStore();
     const [activeFilter, setActiveFilter] = useState('All Cards');
+    const [sortBy, setSortBy] = useState<'match' | 'benefit' | 'approval'>('match');
+    const [compareIds, setCompareIds] = useState<string[]>([]);
+    const [showCompareModal, setShowCompareModal] = useState(false);
 
     const result = useMemo(() => {
         return rankCards(profile, cards);
@@ -33,7 +38,38 @@ export default function ResultsPage() {
         return rankedCards;
     }, [rankedCards, activeFilter]);
 
-    const topCards = filteredCards.slice(0, 5);
+    const sortedCards = useMemo(() => {
+        const sorted = [...filteredCards];
+        if (sortBy === 'benefit') {
+            sorted.sort((a, b) => b.netAnnualBenefit - a.netAnnualBenefit);
+        } else if (sortBy === 'approval') {
+            const order: Record<string, number> = { High: 3, Moderate: 2, Low: 1 };
+            sorted.sort((a, b) => (order[b.approvalProbability] || 0) - (order[a.approvalProbability] || 0));
+        }
+        return sorted;
+    }, [filteredCards, sortBy]);
+
+    const topCards = sortedCards.slice(0, 5);
+
+    const toggleCompare = useCallback((id: string) => {
+        setCompareIds(prev => {
+            const isSelected = prev.includes(id);
+            const card = rankedCards.find(c => c.id === id);
+            if (card) trackCompareToggle(card.name, !isSelected);
+            if (isSelected) return prev.filter(x => x !== id);
+            if (prev.length >= 3) return prev;
+            return [...prev, id];
+        });
+    }, [rankedCards]);
+
+    const selectedCards = useMemo(() => {
+        return compareIds.map(id => rankedCards.find(c => c.id === id)).filter(Boolean) as typeof rankedCards;
+    }, [compareIds, rankedCards]);
+
+    const openCompare = () => {
+        trackCompareView(selectedCards.map(c => c.name));
+        setShowCompareModal(true);
+    };
 
     return (
         <div id="screen-results" style={{ display: 'block' }}>
@@ -49,7 +85,18 @@ export default function ResultsPage() {
                 <ResultsSidebar matchedCount={filteredCards.length} topCard={topCards[0]} />
 
                 <div>
-                    <FilterChips activeFilter={activeFilter} onFilterChange={(f) => { trackFilterClick(f); setActiveFilter(f); }} />
+                    <div className="results-toolbar">
+                        <FilterChips activeFilter={activeFilter} onFilterChange={(f) => { trackFilterClick(f); setActiveFilter(f); }} />
+                        <select
+                            className="sort-dropdown"
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as 'match' | 'benefit' | 'approval')}
+                        >
+                            <option value="match">Sort: Match Score</option>
+                            <option value="benefit">Sort: Annual Benefit</option>
+                            <option value="approval">Sort: Approval Chance</option>
+                        </select>
+                    </div>
 
                     {(limitedResults || incomeBucket === 'secured_only' || note) && (
                         <div style={{
@@ -70,7 +117,14 @@ export default function ResultsPage() {
                     )}
 
                     {topCards.map((card, idx) => (
-                        <ResultCard key={card.id} card={card} rank={idx + 1} />
+                        <ResultCard
+                            key={card.id}
+                            card={card}
+                            rank={idx + 1}
+                            isSelected={compareIds.includes(card.id)}
+                            onToggleCompare={() => toggleCompare(card.id)}
+                            compareCount={compareIds.length}
+                        />
                     ))}
 
                     {topCards.length === 0 && (
@@ -80,8 +134,29 @@ export default function ResultsPage() {
                             <p style={{ color: 'var(--text-light)' }}>Try selecting "All Cards" or adjusting your preferences.</p>
                         </div>
                     )}
+
+                    <div className="results-meta">
+                        <span>Last updated: March 2026</span>
+                        <span className="results-meta-dot"></span>
+                        <span>Based on 30+ cards from HDFC, SBI, ICICI & more</span>
+                    </div>
                 </div>
             </div>
+
+            {compareIds.length >= 2 && (
+                <CompareBar
+                    selectedCards={selectedCards}
+                    onCompare={openCompare}
+                    onClear={() => setCompareIds([])}
+                />
+            )}
+
+            {showCompareModal && (
+                <CompareModal
+                    cards={selectedCards}
+                    onClose={() => setShowCompareModal(false)}
+                />
+            )}
         </div>
     );
 }

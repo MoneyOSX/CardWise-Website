@@ -1,13 +1,23 @@
 import type { RankedCard } from '../../types';
 import { trackResultCardClick } from '../../services/analytics';
 
-export default function ResultCard({ card, rank }: { card: RankedCard, rank: number }) {
+interface ResultCardProps {
+    card: RankedCard;
+    rank: number;
+    isSelected?: boolean;
+    onToggleCompare?: () => void;
+    compareCount?: number;
+}
+
+export default function ResultCard({ card, rank, isSelected, onToggleCompare, compareCount = 0 }: ResultCardProps) {
     const getGradient = () => {
         return 'linear-gradient(135deg, var(--blue), var(--navy))';
     };
 
+    const isDisabled = compareCount >= 3 && !isSelected;
+
     return (
-        <div className={`result-card ${rank === 1 ? 'top' : ''}`} onClick={() => trackResultCardClick(card.name, rank)}>
+        <div className={`result-card ${rank === 1 ? 'top' : ''} ${isSelected ? 'compare-selected' : ''}`} onClick={() => trackResultCardClick(card.name, rank)}>
             <div className="rc-top-row">
                 <div className="rc-left-info">
                     <div className={`rc-rank rank-${Math.min(rank, 3)}`}>#{rank}</div>
@@ -23,6 +33,15 @@ export default function ResultCard({ card, rank }: { card: RankedCard, rank: num
                     {card.approvalProbability === 'High' && <span className="rbadge rbadge-green">HIGH Approval</span>}
                     {card.approvalProbability === 'Moderate' && <span className="rbadge rbadge-amber">Good Chances</span>}
                     {card.annualFee === 0 && <span className="rbadge rbadge-blue">LIFETIME FREE</span>}
+                    {onToggleCompare && (
+                        <button
+                            className={`compare-checkbox ${isSelected ? 'checked' : ''}`}
+                            disabled={isDisabled}
+                            onClick={(e) => { e.stopPropagation(); onToggleCompare(); }}
+                        >
+                            {isSelected ? '✓ Compare' : '+ Compare'}
+                        </button>
+                    )}
                 </div>
             </div>
 

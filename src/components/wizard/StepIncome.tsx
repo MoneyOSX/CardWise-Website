@@ -60,8 +60,6 @@ export default function StepIncome({ onNext }: { onNext: () => void }) {
                 </div>
             )}
 
-            <div className="privacy-note" style={{ marginTop: 24 }}>🛡️ Your data is processed locally and never stored on our servers.</div>
-
             <button
                 className="cta-btn"
                 onClick={onNext}

@@ -95,6 +95,7 @@ export default function WizardLayout() {
                     {step === 4 && <StepSpending onNext={handleNext} />}
                     {step === 5 && <StepPreferences onNext={handleNext} />}
                     {step === 6 && <StepBanks onNext={handleNext} />}
+                    <div className="privacy-banner">🛡️ Your data is used only for match recommendations. Nothing is stored.</div>
                 </div>
 
                 <div className="app-screen active">

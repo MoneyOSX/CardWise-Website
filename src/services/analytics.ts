@@ -45,3 +45,9 @@ export const trackResultCardClick = (cardName: string, cardRank: number) =>
 
 export const trackFilterClick = (filterName: string) =>
   track('filter_click', { filter_name: filterName });
+
+export const trackCompareToggle = (cardName: string, selected: boolean) =>
+  track('compare_toggle', { card_name: cardName, selected });
+
+export const trackCompareView = (cardNames: string[]) =>
+  track('compare_view', { card_names: cardNames.join(', '), card_count: cardNames.length });

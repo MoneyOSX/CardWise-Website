@@ -4,6 +4,7 @@ import Hero from '../components/landing/Hero';
 import TrustBar from '../components/landing/TrustBar';
 import Stats from '../components/landing/Stats';
 import HowItWorks from '../components/landing/HowItWorks';
+import Testimonials from '../components/landing/Testimonials';
 import Features from '../components/landing/Features';
 import CardsPreview from '../components/landing/CardsPreview';
 import CTASection from '../components/landing/CTASection';
@@ -16,6 +17,7 @@ export default function LandingPage() {
             <TrustBar />
             <Stats />
             <HowItWorks />
+            <Testimonials />
             <Features />
             <CardsPreview />
             <CTASection />

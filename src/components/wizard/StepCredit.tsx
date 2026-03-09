@@ -31,6 +31,15 @@ export default function StepCredit({ onNext }: { onNext: () => void }) {
                 ))}
             </div>
 
+            <a
+                href="https://myscore.cibil.com/CreditView/enrollShort.page?enterprise=CIBIL"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="credit-score-link"
+            >
+                Don't know your score? Check it free on CIBIL →
+            </a>
+
             <button className="cta-btn" onClick={onNext}>Continue →</button>
         </div>
     );

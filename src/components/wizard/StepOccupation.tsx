@@ -37,9 +37,6 @@ export default function StepOccupation({ onNext }: { onNext: () => void }) {
                 </div>
             </div>
             <button className="cta-btn" onClick={onNext}>Continue →</button>
-            <div style={{ fontSize: '12px', color: 'var(--text-3)', textAlign: 'center', marginTop: '12px' }}>
-                Your data is used only for match recommendations.
-            </div>
         </div>
     );
 }

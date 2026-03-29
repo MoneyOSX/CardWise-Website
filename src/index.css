@@ -1863,6 +1863,12 @@ footer {
   -moz-appearance: textfield;
 }
 
+.spend-card-custom input:focus,
+.spend-card-custom input:focus-visible {
+  outline: 2px solid var(--cat-accent);
+  outline-offset: 2px;
+}
+
 .spend-card-custom input::-webkit-inner-spin-button,
 .spend-card-custom input::-webkit-outer-spin-button {
   -webkit-appearance: none;

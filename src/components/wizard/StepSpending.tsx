@@ -1,27 +1,36 @@
 import { useState } from 'react';
 import { useUserStore } from '../../store/userStore';
+import { CATEGORY_LABELS, SPENDING_SLABS } from '../../constants';
+
+const CATEGORY_UI: Record<keyof typeof CATEGORY_LABELS, { emoji: string; accent: string; accentLight: string }> = {
+    online:       { emoji: '🛒', accent: '#4F7DF9', accentLight: '#EEF2FF' },
+    foodDelivery: { emoji: '🍱', accent: '#F97B4F', accentLight: '#FFF3ED' },
+    dining:       { emoji: '🍽️', accent: '#E5A83B', accentLight: '#FFF9EC' },
+    groceries:    { emoji: '🥦', accent: '#10B981', accentLight: '#ECFDF5' },
+    fuel:         { emoji: '⛽', accent: '#D4A017', accentLight: '#FEF9EC' },
+    utilities:    { emoji: '💡', accent: '#8B5CF6', accentLight: '#F3EEFF' },
+    travel:       { emoji: '✈️', accent: '#0EA5E9', accentLight: '#EFF8FF' },
+    emi:          { emoji: '📱', accent: '#EC4899', accentLight: '#FFF0F6' },
+    other:        { emoji: '💰', accent: '#6B7280', accentLight: '#F3F4F6' },
+};
+
+const categories = (Object.keys(CATEGORY_LABELS) as Array<keyof typeof CATEGORY_LABELS>).map(id => ({
+    id,
+    name: CATEGORY_LABELS[id],
+    ...CATEGORY_UI[id],
+    slabs: SPENDING_SLABS[id],
+}));
 
 export default function StepSpending({ onNext }: { onNext: () => void }) {
     const { profile, setSpending, getTotalSpending } = useUserStore();
     const [customOpenId, setCustomOpenId] = useState<string | null>(null);
     const [customInputValue, setCustomInputValue] = useState('');
 
-    const categories = [
-        { id: 'online', name: 'Online Shopping', emoji: '🛒', accent: '#4F7DF9', accentLight: '#EEF2FF', ranges: [0, 1500, 3500, 7500, 12000] },
-        { id: 'foodDelivery', name: 'Food Delivery', emoji: '🍱', accent: '#F97B4F', accentLight: '#FFF3ED', ranges: [0, 750, 2000, 4000, 6000] },
-        { id: 'dining', name: 'Dining Out', emoji: '🍽️', accent: '#E5A83B', accentLight: '#FFF9EC', ranges: [0, 750, 2000, 4000, 6000] },
-        { id: 'groceries', name: 'Groceries', emoji: '🥦', accent: '#10B981', accentLight: '#ECFDF5', ranges: [0, 2000, 4000, 7500, 12000] },
-        { id: 'fuel', name: 'Fuel', emoji: '⛽', accent: '#D4A017', accentLight: '#FEF9EC', ranges: [0, 1500, 3500, 6500, 10000] },
-        { id: 'utilities', name: 'Bills & Utilities', emoji: '💡', accent: '#8B5CF6', accentLight: '#F3EEFF', ranges: [0, 2000, 4000, 6500, 10000] },
-        { id: 'travel', name: 'Travel & Hotels', emoji: '✈️', accent: '#0EA5E9', accentLight: '#EFF8FF', ranges: [0, 2000, 5000, 11000, 20000] },
-        { id: 'emi', name: 'EMI / Big Buys', emoji: '📱', accent: '#EC4899', accentLight: '#FFF0F6', ranges: [0, 3500, 10000, 20000] },
-    ] as const;
-
     const total = getTotalSpending();
 
     const isCustomValue = (catId: string, val: number): boolean => {
         const cat = categories.find(c => c.id === catId);
-        return val > 0 && cat !== undefined && !(cat.ranges as readonly number[]).includes(val);
+        return val > 0 && cat !== undefined && !cat.slabs.some(s => s.value === val);
     };
 
     const handlePresetClick = (catId: string, val: number) => {
@@ -41,15 +50,22 @@ export default function StepSpending({ onNext }: { onNext: () => void }) {
     };
 
     const handleCustomChange = (catId: string, raw: string) => {
-        const parsed = parseInt(raw, 10);
-        const clamped = isNaN(parsed) ? 0 : Math.min(Math.max(parsed, 0), 100000);
-        setSpending(catId as Parameters<typeof setSpending>[0], clamped);
-    };
+        if (raw === '') {
+            setCustomInputValue('');
+            setSpending(catId as Parameters<typeof setSpending>[0], 0);
+            return;
+        }
 
-    const formatRange = (val: number, idx: number, total: number) => {
-        if (idx === 0) return 'None';
-        const k = val / 1000;
-        return `₹${k % 1 === 0 ? k : k.toFixed(1)}${idx === total - 1 ? 'K+' : 'K'}`;
+        const parsed = parseInt(raw, 10);
+
+        if (isNaN(parsed)) {
+            setCustomInputValue(raw);
+            return;
+        }
+
+        const clamped = Math.min(Math.max(parsed, 0), 100000);
+        setCustomInputValue(String(clamped));
+        setSpending(catId as Parameters<typeof setSpending>[0], clamped);
     };
 
     const activeCount = categories.filter(cat => profile.spending[cat.id] > 0).length;
@@ -95,24 +111,22 @@ export default function StepSpending({ onNext }: { onNext: () => void }) {
                             </div>
 
                             <div className="spend-card-ranges">
-                                {cat.ranges.map((val, idx) => {
-                                    const isSelected = currentVal === val && !isCustomOpen;
+                                {cat.slabs.map((slab, idx) => {
+                                    const isSelected = currentVal === slab.value && !isCustomOpen;
                                     return (
                                         <button
                                             key={idx}
                                             className={`spend-chip ${isSelected ? 'spend-chip--selected' : ''}`}
                                             style={isSelected ? { background: cat.accent, borderColor: cat.accent } : undefined}
-                                            onMouseDown={(e) => e.preventDefault()}
-                                            onClick={() => handlePresetClick(cat.id, val)}
+                                            onClick={() => handlePresetClick(cat.id, slab.value)}
                                         >
-                                            {formatRange(val, idx, cat.ranges.length)}
+                                            {slab.label}
                                         </button>
                                     );
                                 })}
                                 <button
                                     className={`spend-chip spend-chip--custom ${isCustom || isCustomOpen ? 'spend-chip--selected' : ''}`}
                                     style={isCustom || isCustomOpen ? { background: cat.accent, borderColor: cat.accent } : undefined}
-                                    onMouseDown={(e) => e.preventDefault()}
                                     onClick={() => handleCustomChipClick(cat.id, currentVal, isCustomOpen, isCustom)}
                                 >
                                     ✏️ Custom
@@ -127,16 +141,14 @@ export default function StepSpending({ onNext }: { onNext: () => void }) {
                                         min={0}
                                         max={100000}
                                         value={customInputValue}
-                                        onChange={(e) => {
-                                            setCustomInputValue(e.target.value);
-                                            handleCustomChange(cat.id, e.target.value);
-                                        }}
+                                        onChange={(e) => handleCustomChange(cat.id, e.target.value)}
                                         onBlur={() => {
                                             setCustomOpenId(null);
                                             setCustomInputValue('');
                                         }}
                                         autoFocus
                                         placeholder="Enter amount"
+                                        aria-label={`Custom monthly spending amount for ${cat.name}`}
                                     />
                                 </div>
                             )}
